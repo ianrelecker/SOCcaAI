@@ -1,0 +1,13 @@
+{
+  "template_metadata": {
+    "generator": "SOCca SIEM Integration",
+    "generated_at": "2025-03-08T21:00:57.715633+00:00",
+    "report_count": 2,
+    "version": "1.0"
+  },
+  "alert_templates": {
+    "splunk": [],
+    "elastic": [],
+    "qradar": []
+  }
+}

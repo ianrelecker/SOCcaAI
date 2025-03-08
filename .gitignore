@@ -1,0 +1,61 @@
+/kryptos-working/.idea/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Exported data
+data/exports/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# API keys
+kryptos-working/files/apikeys
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Claude
+CLAUDE.md

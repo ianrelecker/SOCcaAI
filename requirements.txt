@@ -1,0 +1,13 @@
+requests==2.31.0
+openai==0.28.1
+# Using older OpenAI SDK for compatibility
+# tiktoken has been replaced with custom token counter in token_counter.py
+beautifulsoup4==4.12.2
+readability-lxml==0.8.1
+lxml_html_clean>=0.4.1
+nvdlib==0.7.4
+pytest==7.4.3
+pytest-mock==3.12.0
+requests-mock==1.11.0
+flake8==6.1.0
+python-dotenv==1.0.0
