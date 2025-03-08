@@ -2,8 +2,6 @@
 
 SOCca is an advanced security vulnerability monitoring and analysis platform designed to run on Linux servers. It leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
 
-![SOCca Logo](https://via.placeholder.com/800x200?text=SOCca+Microsoft+Sentinel+Integration)
-
 ## 🚀 Key Features
 
 - **Real-time CVE Monitoring**: Automatically tracks new vulnerabilities as they're published to the NVD
@@ -208,10 +206,6 @@ Common issues and solutions:
 4. **Service failures**:
    - Check service logs with `sudo journalctl -u socca-monitor`
    - Verify correct paths in service files
-
-## 📄 License
-
-[License information]
 
 ## 🤝 Contributing
 
