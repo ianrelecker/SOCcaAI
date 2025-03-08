@@ -27,8 +27,7 @@ git clone https://github.com/ianrelecker/SOCcaAI.git
 cd SOCcaAI
 
 # Install dependencies
-chmod +x ./install_dependencies.sh
-./install_dependencies.sh
+pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
