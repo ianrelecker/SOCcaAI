@@ -16,8 +16,8 @@ Before starting, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/soccav2.git
-cd soccav2
+git clone https://github.com/ianrelecker/SOCcaAI.git
+cd SOCcaAI
 ```
 
 ### 2. Install Dependencies

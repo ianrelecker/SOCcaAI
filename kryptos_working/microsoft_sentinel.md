@@ -101,18 +101,29 @@ SOCca sends the following fields to Microsoft Sentinel:
 | AffectedVendors | Comma-separated list of affected vendors |
 | MitreAttackTactics | MITRE ATT&CK technique IDs extracted from the report |
 
-## Azure Deployment
+## Linux Server Deployment
 
-SOCca includes Azure Pipeline configuration to deploy the Microsoft Sentinel integration:
+SOCca can be deployed on any Linux server with these simple steps:
 
-1. Set up Azure DevOps with access to the repository
-2. Configure pipeline variables:
-   - `SENTINEL_WORKSPACE_ID`
-   - `SENTINEL_PRIMARY_KEY`
-   - `OPENAI_API_KEY`
-   - `NVD_API_KEY`
+1. Install dependencies:
+   ```bash
+   chmod +x install_dependencies.sh
+   ./install_dependencies.sh
+   ```
 
-3. Run the pipeline to deploy to Azure App Service
+2. Configure environment variables in `.env` file:
+   ```
+   SENTINEL_WORKSPACE_ID=your-workspace-id
+   SENTINEL_PRIMARY_KEY=your-workspace-primary-key
+   OPENAI_API_KEY=your-openai-api-key
+   NVD_API_KEY=your-nvd-api-key
+   ```
+
+3. Set up as systemd services for continuous operation:
+   ```bash
+   # Follow the instructions in deployment.md
+   # to create systemd service files
+   ```
 
 The deployed system will:
 - Continuously monitor for new CVEs

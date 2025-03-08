@@ -145,22 +145,29 @@ SOCcaCVE_CL
 
 ## 🚀 Deployment Options
 
-### Local Deployment
+### Linux Server Deployment
 
-For testing or smaller environments:
+Deploy SOCca on a Linux server using one of these approaches:
+
+#### Quick Start with Startup Script
 
 ```bash
 # Start all services using the startup script
+chmod +x startup.sh
 ./startup.sh
 ```
 
-### Azure Deployment
+#### Production Deployment with Systemd
 
-Deploy via Azure Pipelines for a fully managed solution:
+For production environments, configure SOCca components as system services:
 
-1. Fork the repository to your Azure DevOps organization
-2. Set up pipeline variables for API keys and Sentinel credentials
-3. Run the pipeline to deploy to an Azure Web App
+```bash
+# Create systemd service files for reliable operation
+sudo cp deployment/socca-*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable socca-monitor socca-sentinel
+sudo systemctl start socca-monitor socca-sentinel
+```
 
 For detailed instructions, see the [Deployment Guide](kryptos_working/deployment.md).
 
@@ -180,15 +187,14 @@ Configure automated exports to Microsoft Sentinel:
 
 ```bash
 # Add to crontab for scheduled exports
-0 * * * * cd /path/to/soccav2 && python kryptos_working/sentinel_exporter.py --direct-send --hours 1
+0 * * * * cd /path/to/SOCcaAI && python3 kryptos_working/sentinel_exporter.py --direct-send --hours 1
 ```
 
 ## 📚 Documentation
 
 - [Microsoft Sentinel Integration Guide](kryptos_working/microsoft_sentinel.md) - Comprehensive Sentinel integration details
-- [Deployment Guide](kryptos_working/deployment.md) - Local and Azure deployment instructions
+- [Deployment Guide](kryptos_working/deployment.md) - Linux server deployment instructions
 - [Quick Start Guide](kryptos_working/quickstart.md) - Complete setup and usage instructions
-- [Development Roadmap](kryptos_working/roadmap.md) - Upcoming features
 
 ## 🔍 Troubleshooting
 

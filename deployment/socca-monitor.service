@@ -1,0 +1,17 @@
+[Unit]
+Description=SOCca CVE Monitor
+After=network.target
+
+[Service]
+Type=simple
+User=socca
+Group=socca
+WorkingDirectory=/opt/socca
+ExecStart=/usr/bin/python3 /opt/socca/kryptos_working/mainv2.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

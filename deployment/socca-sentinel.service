@@ -1,0 +1,17 @@
+[Unit]
+Description=SOCca Sentinel Exporter
+After=network.target socca-monitor.service
+
+[Service]
+Type=simple
+User=socca
+Group=socca
+WorkingDirectory=/opt/socca
+ExecStart=/bin/bash -c 'while true; do /usr/bin/python3 /opt/socca/kryptos_working/sentinel_exporter.py --direct-send --hours 1; sleep 3600; done'
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
