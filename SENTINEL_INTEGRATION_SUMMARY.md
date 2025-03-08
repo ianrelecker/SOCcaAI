@@ -24,7 +24,7 @@ This document summarizes the changes made to focus the SOCca project exclusively
 1. **Streamlined Integration**: Direct connection to Microsoft Sentinel's Log Analytics API
 2. **Enhanced Alert Generation**: Custom alert templates based on CVE intelligence
 3. **MITRE ATT&CK Mapping**: Extracted tactics and techniques for better threat correlation
-4. **Simplified Deployment**: Clear Azure deployment instructions and pipeline configuration
+4. **Simplified Deployment**: Clear Linux server deployment instructions
 5. **Advanced Visualization**: KQL query examples for custom workbooks and dashboards
 
 ## Next Steps
@@ -33,7 +33,7 @@ This document summarizes the changes made to focus the SOCca project exclusively
 2. **Testing**: Verify Microsoft Sentinel integration with a test workspace
 3. **Enhancement**: Add more KQL examples for dashboards and workbooks
 4. **Documentation**: Create video walkthrough or screenshots of the integration
-5. **Azure Deployment**: Test and refine the Azure pipeline deployment
+5. **Linux Deployment**: Test and refine the Linux server deployment
 
 ## Files to Check
 

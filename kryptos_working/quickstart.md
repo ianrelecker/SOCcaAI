@@ -70,15 +70,7 @@ Polls for new vulnerabilities and triggers analysis:
 python kryptos_working/mainv2.py
 ```
 
-### Component 2: Report Generator
-
-Creates periodic summary reports:
-
-```bash
-python kryptos_working/hourlyreportgen.py
-```
-
-### Component 3: Microsoft Sentinel Exporter
+### Component 2: Microsoft Sentinel Exporter
 
 Integrates with Microsoft Sentinel through direct API or file exports:
 
@@ -179,13 +171,11 @@ For the Microsoft Sentinel Exporter, you might want to set up a cron job for sch
 30 0 * * * cd /path/to/soccav2 && python kryptos_working/sentinel_exporter.py --file-export
 ```
 
-## Azure Deployment
+## Linux Server Deployment
 
-For deployment to Azure, refer to the [Deployment Guide](deployment.md) for detailed instructions on:
+For deployment to a Linux server, refer to the [Deployment Guide](deployment.md) for detailed instructions on:
 
-- Setting up Azure resources
-- Configuring Azure Pipelines
-- Using the provided startup.sh script
-- Monitoring logs in Azure App Service
-
-The Azure deployment will automatically run all components and handle the Microsoft Sentinel integration based on your environment variables.
+- Setting up systemd services for continuous operation
+- Using screen or tmux for development environments
+- Running with the provided startup.sh script
+- Monitoring and troubleshooting service logs

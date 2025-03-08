@@ -1,8 +1,8 @@
 # SOCca Deployment Guide
 
-This document provides detailed instructions for deploying SOCca both locally and to Azure using pipelines.
+This document provides detailed instructions for deploying SOCca on a Linux server.
 
-## Local Deployment
+## Linux Server Deployment
 
 ### Prerequisites
 
@@ -17,8 +17,8 @@ This document provides detailed instructions for deploying SOCca both locally an
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/soccav2.git
-   cd soccav2
+   git clone https://github.com/ianrelecker/SOCcaAI.git
+   cd SOCcaAI
    ```
 
 2. **Install dependencies**:
@@ -57,146 +57,96 @@ This document provides detailed instructions for deploying SOCca both locally an
    python setup.py
    ```
 
-### Running SOCca Locally
+### Running SOCca as Services
 
-SOCca consists of several components that should run simultaneously in separate terminals:
+For production environments, you should configure SOCca components to run as services using systemd:
 
-1. **CVE Monitor** (collects and analyzes vulnerabilities):
-   ```bash
-   python kryptos_working/mainv2.py
-   ```
+1. **Create systemd service files**:
 
-2. **Report Generator** (creates periodic summaries):
-   ```bash
-   python kryptos_working/hourlyreportgen.py
-   ```
-
-3. **Microsoft Sentinel Exporter** (sends data to Sentinel):
-   ```bash
-   # Send latest vulnerabilities directly to Microsoft Sentinel
-   python kryptos_working/sentinel_exporter.py --direct-send
+   Create a service file for the CVE Monitor (save as `/etc/systemd/system/socca-monitor.service`):
+   ```ini
+   [Unit]
+   Description=SOCca CVE Monitor
+   After=network.target
    
-   # Or generate alert templates for Microsoft Sentinel
-   python kryptos_working/sentinel_exporter.py --alerts
+   [Service]
+   User=youruser
+   WorkingDirectory=/path/to/SOCcaAI
+   ExecStart=/usr/bin/python /path/to/SOCcaAI/kryptos_working/mainv2.py
+   Restart=on-failure
    
-   # Or export to file for manual upload
-   python kryptos_working/sentinel_exporter.py --file-export
+   [Install]
+   WantedBy=multi-user.target
    ```
 
-For long-term deployments, you may want to set up these components as system services using systemd, supervisor, or similar tools.
-
-## Azure Deployment
-
-SOCca can be deployed to Azure using Azure Pipelines and Azure Web App services.
-
-### Prerequisites
-
-1. Azure account with permission to create web apps
-2. Azure DevOps project for CI/CD pipelines
-3. Service connection in Azure DevOps configured to your Azure subscription
-
-### Pipeline Configuration
-
-1. **Connect your repository to Azure DevOps**:
-   - Set up a new project in Azure DevOps
-   - Import your Git repository
-   - Set up a service connection to your Azure subscription
-
-2. **Set up pipeline variables**:
-   In your Azure DevOps project, go to Pipelines > Library > Variable groups and create a group with:
+   Create a service file for the Sentinel Exporter (save as `/etc/systemd/system/socca-sentinel.service`):
+   ```ini
+   [Unit]
+   Description=SOCca Sentinel Exporter
+   After=network.target socca-monitor.service
    
-   - `NVD_API_KEY`: Your NVD API key
-   - `OPENAI_API_KEY`: Your OpenAI API key
-   - `SENTINEL_WORKSPACE_ID`: Your Microsoft Sentinel workspace ID
-   - `SENTINEL_PRIMARY_KEY`: Your Microsoft Sentinel primary key
-   - `SENTINEL_LOG_TYPE`: Custom log type (default: SOCcaCVE)
-   - `SENTINEL_API_VERSION`: API version (default: 2016-04-01)
-
-3. **Use the existing azure-pipelines.yml file**
+   [Service]
+   User=youruser
+   WorkingDirectory=/path/to/SOCcaAI
+   ExecStart=/bin/bash -c 'while true; do python /path/to/SOCcaAI/kryptos_working/sentinel_exporter.py --direct-send --hours 1; sleep 3600; done'
+   Restart=on-failure
    
-   SOCca already includes an Azure Pipelines configuration file that:
-   - Runs tests
-   - Installs dependencies
-   - Deploys to an Azure Web App
-   - Configures environment variables
+   [Install]
+   WantedBy=multi-user.target
+   ```
 
-### Creating Azure Resources
-
-1. **Create an Azure App Service**:
+2. **Enable and start the services**:
    ```bash
-   # Using Azure CLI
-   az group create --name socca-resources --location eastus
-   
-   az appservice plan create \
-     --name socca-service-plan \
-     --resource-group socca-resources \
-     --sku B1 \
-     --is-linux
-   
-   az webapp create \
-     --resource-group socca-resources \
-     --plan socca-service-plan \
-     --name socca-sentinel \
-     --runtime "PYTHON:3.10" \
-     --startup-file startup.sh
+   sudo systemctl daemon-reload
+   sudo systemctl enable socca-monitor socca-sentinel
+   sudo systemctl start socca-monitor socca-sentinel
    ```
 
-2. **Configure Web App settings**:
+3. **Check service status**:
    ```bash
-   az webapp config appsettings set \
-     --resource-group socca-resources \
-     --name socca-sentinel \
-     --settings \
-       SCM_DO_BUILD_DURING_DEPLOYMENT=true \
-       ENABLE_ORYX_BUILD=true \
-       NVD_API_KEY="your-nvd-api-key" \
-       OPENAI_API_KEY="your-openai-api-key" \
-       SENTINEL_WORKSPACE_ID="your-sentinel-workspace-id" \
-       SENTINEL_PRIMARY_KEY="your-sentinel-primary-key" \
-       SENTINEL_LOG_TYPE="SOCcaCVE" \
-       SENTINEL_API_VERSION="2016-04-01"
+   sudo systemctl status socca-monitor
+   sudo systemctl status socca-sentinel
    ```
 
-### Running the Pipeline
+### Alternative: Running with the Startup Script
 
-1. Go to your Azure DevOps project
-2. Navigate to Pipelines
-3. Create a new pipeline using the existing azure-pipelines.yml file
-4. Run the pipeline
+You can also use the provided startup script to run all components:
 
-The pipeline will:
-1. Test the application
-2. Install dependencies
-3. Deploy to the Azure Web App
-4. Configure the environment variables
+```bash
+chmod +x startup.sh
+./startup.sh
+```
 
-### Post-Deployment Verification
+This script will start the CVE monitoring and Sentinel export processes, keeping them running in the background.
 
-After deployment:
+For long-term deployments with high reliability, the systemd service approach is recommended.
 
-1. **Check Web App logs**:
-   ```bash
-   az webapp log tail --name socca-sentinel --resource-group socca-resources
-   ```
+### Running with Screen or Tmux
 
-2. **Verify sentinel_exporter.py is running**:
-   - Check the logs for successful data transmission:
-   ```bash
-   az webapp log download --name socca-sentinel --resource-group socca-resources
-   ```
+For testing or development, you can use screen or tmux to run components in detached sessions:
 
-3. **Verify Microsoft Sentinel integration**:
-   - Check the Log Analytics workspace for new logs
-   - Look for the custom log type you configured (e.g., SOCcaCVE_CL)
-   - Run a KQL query to verify data ingestion:
-   ```
-   SOCcaCVE_CL
-   | limit 10
-   ```
+```bash
+# Install screen if needed
+sudo apt-get install screen
+
+# Start the CVE monitor in a screen session
+screen -S socca-monitor
+python kryptos_working/mainv2.py
+# Press Ctrl+A, D to detach
+
+# Start the Sentinel exporter in another screen session
+screen -S socca-sentinel
+python kryptos_working/sentinel_exporter.py --direct-send
+# Press Ctrl+A, D to detach
+
+# Reattach to sessions when needed
+screen -r socca-monitor
+screen -r socca-sentinel
+```
 
 ## Troubleshooting
 
-### Common Local Deployment Issues
+### Common Deployment Issues
 
 1. **Missing dependencies**:
    ```bash
@@ -215,25 +165,20 @@ After deployment:
    python setup.py
    ```
 
-### Common Azure Deployment Issues
+4. **Service startup failures**:
+   ```bash
+   # Check service logs
+   sudo journalctl -u socca-monitor
+   sudo journalctl -u socca-sentinel
+   ```
 
-1. **Pipeline failures**:
-   - Check that your service connection is configured correctly
-   - Verify all required pipeline variables are set
-
-2. **Startup issues in Azure**:
-   - Check Web App logs for startup errors
-   - Verify startup.sh has executable permissions
-   - Make sure the app settings are correctly configured
-
-3. **Microsoft Sentinel integration failures**:
+5. **Microsoft Sentinel integration failures**:
    - Verify workspace ID and primary key are correct
    - Check logs for connection errors to Microsoft Sentinel
-   - Verify network security groups allow outbound HTTPS traffic
+   - Verify outbound HTTPS traffic is allowed
 
 ## References
 
-- [Azure Web Apps Documentation](https://docs.microsoft.com/en-us/azure/app-service/)
-- [Azure Pipelines Documentation](https://docs.microsoft.com/en-us/azure/devops/pipelines/)
 - [Microsoft Sentinel Documentation](https://docs.microsoft.com/en-us/azure/sentinel/)
 - [Log Analytics Data Collector API](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/data-collector-api)
+- [Systemd Service Documentation](https://www.freedesktop.org/software/systemd/man/systemd.service.html)

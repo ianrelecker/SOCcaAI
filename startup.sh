@@ -1,5 +1,5 @@
 #!/bin/bash
-# Azure App Service startup script for SOCca Microsoft Sentinel integration
+# Startup script for SOCca Microsoft Sentinel integration on Linux
 
 # Create necessary directories
 mkdir -p logs
@@ -18,11 +18,6 @@ echo "$(date) - Starting SOCca services for Microsoft Sentinel..."
 echo "$(date) - Starting CVE monitoring..."
 python kryptos_working/mainv2.py &
 MONITOR_PID=$!
-
-# Start report generation in the background
-echo "$(date) - Starting report generation..."
-python kryptos_working/hourlyreportgen.py &
-REPORT_PID=$!
 
 # Wait for a few seconds for the services to start
 sleep 5
