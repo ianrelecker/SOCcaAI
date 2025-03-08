@@ -1,7 +1,5 @@
 # SOCca - AI-Powered CVE Intelligence with Microsoft Sentinel Integration
 
-![SOCca Banner](https://socca.tech/wp-content/uploads/2023/05/socca-banner.jpg)
-
 SOCca is an advanced security vulnerability monitoring and analysis platform that leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
 
 ## 🚀 Key Features
@@ -25,8 +23,8 @@ SOCca is an advanced security vulnerability monitoring and analysis platform tha
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/soccav2.git
-cd soccav2
+git clone https://github.com/ianrelecker/SOCcaAI.git
+cd SOCcaAI
 
 # Install dependencies
 chmod +x ./install_dependencies.sh
@@ -48,10 +46,7 @@ Start each component in a separate terminal:
 # Component 1: CVE Monitor (collects and analyzes vulnerabilities)
 python kryptos_working/mainv2.py
 
-# Component 2: Report Generator (creates periodic summaries)
-python kryptos_working/hourlyreportgen.py
-
-# Component 3: Microsoft Sentinel Exporter (sends data to Sentinel)
+# Component 2: Microsoft Sentinel Exporter (sends data to Sentinel)
 python kryptos_working/sentinel_exporter.py --direct-send
 ```
 
