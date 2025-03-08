@@ -1,7 +1,5 @@
 # SOCca - AI-Powered CVE Intelligence with Microsoft Sentinel Integration
 
-![SOCca Banner](https://socca.tech/wp-content/uploads/2023/05/socca-banner.jpg)
-
 SOCca is an advanced security vulnerability monitoring and analysis platform that leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
 
 ## 🚀 Key Features
