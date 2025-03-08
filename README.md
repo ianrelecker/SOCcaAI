@@ -23,8 +23,8 @@ SOCca is an advanced security vulnerability monitoring and analysis platform tha
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/soccav2.git
-cd soccav2
+git clone https://github.com/ianrelecker/SOCcaAI.git
+cd SOCcaAI
 
 # Install dependencies
 chmod +x ./install_dependencies.sh
