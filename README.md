@@ -1,6 +1,8 @@
 # SOCca - AI-Powered CVE Intelligence with Microsoft Sentinel Integration
 
-SOCca is an advanced security vulnerability monitoring and analysis platform that leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
+SOCca is an advanced security vulnerability monitoring and analysis platform designed to run on Linux servers. It leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
+
+![SOCca Logo](https://via.placeholder.com/800x200?text=SOCca+Microsoft+Sentinel+Integration)
 
 ## 🚀 Key Features
 
@@ -9,17 +11,18 @@ SOCca is an advanced security vulnerability monitoring and analysis platform tha
 - **Intelligent Severity Assessment**: Goes beyond CVSS scores to provide context-aware risk evaluations
 - **Microsoft Sentinel Integration**: Direct integration with Microsoft Sentinel via Log Analytics API
 - **Alert Template Generation**: Creates ready-to-use Sentinel analytics rules based on vulnerabilities
+- **Linux Server Optimized**: Designed to run as systemd services on Linux servers for reliability
 
-## 📋 Quick Setup Guide
+## 📋 Quick Installation Guide
 
 ### Prerequisites
 
-- Python 3.8+
+- Linux server with Python 3.8+
 - NVD API key (free from https://nvd.nist.gov/developers/request-an-api-key)
 - OpenAI API key
 - Microsoft Sentinel workspace with Log Analytics access
 
-### 1. Installation
+### Installation
 
 ```bash
 # Clone the repository
@@ -27,33 +30,38 @@ git clone https://github.com/ianrelecker/SOCcaAI.git
 cd SOCcaAI
 
 # Install dependencies
-pip install -r requirements.txt
+chmod +x install_dependencies.sh
+./install_dependencies.sh
 
 # Configure environment
 cp .env.example .env
 nano .env  # Edit with your API keys and Sentinel settings
 
 # Initialize databases
-python setup.py
+python3 setup.py
 ```
 
-### 2. Running SOCca
+### Running SOCca
 
-Start each component in a separate terminal:
+Start all components automatically with the startup script:
 
 ```bash
-# Component 1: CVE Monitor (collects and analyzes vulnerabilities)
-python kryptos_working/mainv2.py
+chmod +x startup.sh
+./startup.sh
+```
 
-# Component 2: Microsoft Sentinel Exporter (sends data to Sentinel)
-python kryptos_working/sentinel_exporter.py --direct-send
+For production deployments, use the provided systemd service files:
+
+```bash
+sudo cp deployment/socca-*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable socca-monitor socca-sentinel
+sudo systemctl start socca-monitor socca-sentinel
 ```
 
 For complete step-by-step instructions, see the [Quick Start Guide](kryptos_working/quickstart.md).
 
-## 🛡️ Microsoft Sentinel Integration Guide
-
-SOCca provides seamless integration with Microsoft Sentinel, allowing you to automatically send enriched vulnerability data to your SIEM for better security monitoring and alerting.
+## 🛡️ Microsoft Sentinel Integration
 
 ### Setup Microsoft Sentinel Integration
 
@@ -74,10 +82,10 @@ SOCca provides seamless integration with Microsoft Sentinel, allowing you to aut
 3. **Start the integration**:
    ```bash
    # Send vulnerability data to Sentinel
-   python kryptos_working/sentinel_exporter.py --direct-send
+   python3 kryptos_working/sentinel_exporter.py --direct-send
    
    # Generate alert templates for Sentinel
-   python kryptos_working/sentinel_exporter.py --alerts
+   python3 kryptos_working/sentinel_exporter.py --alerts
    ```
 
 ### Using Vulnerability Data in Microsoft Sentinel
@@ -125,31 +133,13 @@ SOCcaCVE_CL
 | where AffectedProducts_s has_any("Windows Server", "Azure", "Office 365")
 ```
 
-#### 4. Create Incidents from Alerts
-
-Configure analytics rules to generate incidents:
-
-1. Set appropriate alert thresholds (e.g., CVSS ≥ 8.0)
-2. Configure incident grouping by CVE ID
-3. Set automated response playbooks (optional)
-
-#### 5. Connect to MITRE ATT&CK Framework
-
-Leverage the extracted MITRE ATT&CK data:
-
-```kusto
-// Find CVEs related to specific ATT&CK techniques
-SOCcaCVE_CL
-| where MitreAttackTactics_s has "T1190" // Exploit Public-Facing Application
-```
-
 ## 🚀 Deployment Options
 
 ### Linux Server Deployment
 
-Deploy SOCca on a Linux server using one of these approaches:
+SOCca is designed to run on Linux servers with two deployment options:
 
-#### Quick Start with Startup Script
+#### Quick Start with Startup Script (Testing/Development)
 
 ```bash
 # Start all services using the startup script
@@ -162,8 +152,10 @@ chmod +x startup.sh
 For production environments, configure SOCca components as system services:
 
 ```bash
-# Create systemd service files for reliable operation
+# Copy and configure service files
 sudo cp deployment/socca-*.service /etc/systemd/system/
+
+# Enable and start services
 sudo systemctl daemon-reload
 sudo systemctl enable socca-monitor socca-sentinel
 sudo systemctl start socca-monitor socca-sentinel
@@ -211,7 +203,11 @@ Common issues and solutions:
 
 3. **Database errors**:
    - Check file permissions on database files
-   - Run `python setup.py` to reinitialize if necessary
+   - Run `python3 setup.py` to reinitialize if necessary
+
+4. **Service failures**:
+   - Check service logs with `sudo journalctl -u socca-monitor`
+   - Verify correct paths in service files
 
 ## 📄 License
 
