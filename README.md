@@ -46,10 +46,7 @@ Start each component in a separate terminal:
 # Component 1: CVE Monitor (collects and analyzes vulnerabilities)
 python kryptos_working/mainv2.py
 
-# Component 2: Report Generator (creates periodic summaries)
-python kryptos_working/hourlyreportgen.py
-
-# Component 3: Microsoft Sentinel Exporter (sends data to Sentinel)
+# Component 2: Microsoft Sentinel Exporter (sends data to Sentinel)
 python kryptos_working/sentinel_exporter.py --direct-send
 ```
 
