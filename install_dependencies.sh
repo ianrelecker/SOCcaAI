@@ -29,6 +29,5 @@ mkdir -p kryptos_working/logs
 # Set executable permissions for scripts
 chmod +x kryptos_working/sentinel_exporter.py
 chmod +x kryptos_working/mainv2.py
-chmod +x kryptos_working/hourlyreportgen.py
 
 echo "Installation complete!"
