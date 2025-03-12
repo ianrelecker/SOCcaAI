@@ -27,7 +27,7 @@ import openai
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed from INFO to DEBUG for more verbose logging
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
@@ -35,6 +35,11 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger('socca')
+
+# Set up more verbose logging for HTTP requests
+requests_logger = logging.getLogger('urllib3')
+requests_logger.setLevel(logging.DEBUG)
+requests_logger.propagate = True
 
 # Load environment variables
 NVD_API_KEY = os.environ.get('NVD_API_KEY')
@@ -150,6 +155,10 @@ def initialize_database():
 def create_request_session():
     """Create a request session with retry logic"""
     session = requests.Session()
+    
+    # Log session creation
+    logger.debug("Creating new request session with retry logic")
+    
     retry_strategy = Retry(
         total=3,
         backoff_factor=1,
@@ -162,8 +171,17 @@ def create_request_session():
     
     # Add NVD API key if available
     if NVD_API_KEY:
+        logger.debug("Adding NVD API key to request headers")
         session.headers.update({"apiKey": NVD_API_KEY})
+    else:
+        logger.warning("No NVD API key found. API rate limits will be more restrictive.")
     
+    # Add user agent to be a good API citizen
+    session.headers.update({
+        "User-Agent": "SOCca-Core/1.0"
+    })
+    
+    logger.debug(f"Session created with headers: {session.headers}")
     return session
 
 def fetch_cves(start_time, end_time):
@@ -181,6 +199,10 @@ def fetch_cves(start_time, end_time):
         "resultsPerPage": 100
     }
     
+    logger.debug(f"NVD API URL: {url}")
+    logger.debug(f"Request params: {params}")
+    logger.debug(f"Using API Key: {'Yes' if NVD_API_KEY else 'No'}")
+    
     session = create_request_session()
     all_cves = []
     
@@ -192,21 +214,42 @@ def fetch_cves(start_time, end_time):
         while True:
             if start_index > 0:
                 params["startIndex"] = start_index
+                logger.debug(f"Fetching page with startIndex: {start_index}")
+            else:
+                logger.debug("Fetching first page")
             
+            request_start = time.time()
             response = session.get(url, params=params, timeout=30)
+            request_time = time.time() - request_start
+            
+            logger.debug(f"NVD API response time: {request_time:.2f}s")
+            logger.debug(f"Response status code: {response.status_code}")
+            logger.debug(f"Response headers: {response.headers}")
             
             if response.status_code != 200:
                 logger.error(f"NVD API error: {response.status_code} - {response.text}")
+                logger.error(f"Request URL: {response.request.url}")
+                logger.error(f"Request headers: {response.request.headers}")
                 break
             
             data = response.json()
+            
+            # Log rate limit information if available
+            if 'X-RateLimit-Limit' in response.headers:
+                logger.debug(f"Rate limit: {response.headers.get('X-RateLimit-Limit')} requests per hour")
+                logger.debug(f"Rate limit remaining: {response.headers.get('X-RateLimit-Remaining')}")
+                logger.debug(f"Rate limit reset: {response.headers.get('X-RateLimit-Reset')}")
+            
             vulnerabilities = data.get('vulnerabilities', [])
             
             if total_results is None:
                 total_results = data.get('totalResults', 0)
                 logger.info(f"Found {total_results} CVEs")
+                if total_results == 0:
+                    logger.debug("No CVEs found in the response - Response data: {data}")
             
             all_cves.extend(vulnerabilities)
+            logger.debug(f"Added {len(vulnerabilities)} CVEs, total so far: {len(all_cves)}/{total_results}")
             
             # Check if we need to fetch more pages
             if len(all_cves) >= total_results or len(vulnerabilities) == 0:
@@ -215,49 +258,72 @@ def fetch_cves(start_time, end_time):
             start_index += len(vulnerabilities)
             
             # Rate limiting to avoid hitting API limits
-            time.sleep(1.0 if NVD_API_KEY else 6.0)
+            sleep_time = 1.0 if NVD_API_KEY else 6.0
+            logger.debug(f"Rate limiting - sleeping for {sleep_time} seconds")
+            time.sleep(sleep_time)
     
     except Exception as e:
-        logger.error(f"Error fetching CVEs: {e}")
+        logger.error(f"Error fetching CVEs: {e}", exc_info=True)
     
     logger.info(f"Successfully retrieved {len(all_cves)} CVEs")
     return all_cves
 
 def process_cve(cve):
     """Extract relevant information from a CVE object"""
-    cve_data = cve.get('cve', {})
-    cve_id = cve_data.get('id')
-    
-    if not cve_id:
-        logger.warning(f"Skipping CVE with no ID: {cve}")
+    try:
+        logger.debug("Processing CVE object")
+        
+        cve_data = cve.get('cve', {})
+        cve_id = cve_data.get('id')
+        
+        if not cve_id:
+            logger.warning(f"Skipping CVE with no ID: {cve}")
+            return None
+            
+        logger.debug(f"Processing CVE ID: {cve_id}")
+        
+        # Extract description
+        descriptions = cve_data.get('descriptions', [])
+        english_descriptions = [d for d in descriptions if d.get('lang') == 'en']
+        description = english_descriptions[0].get('value') if english_descriptions else "No description available"
+        logger.debug(f"Description: {description[:100]}...")
+        
+        # Extract references
+        references = []
+        for ref in cve_data.get('references', []):
+            url = ref.get('url')
+            if url:
+                references.append(url)
+        logger.debug(f"Found {len(references)} references")
+        
+        # Extract publish date
+        published = cve_data.get('published')
+        logger.debug(f"Published date: {published}")
+        
+        # Extract CVSS data
+        metrics = cve_data.get('metrics', {})
+        
+        # Log CVSS scores if available
+        if 'cvssMetricV31' in metrics and metrics['cvssMetricV31']:
+            cvss_score = metrics['cvssMetricV31'][0]['cvssData']['baseScore']
+            logger.debug(f"CVSS Score: {cvss_score}")
+        
+        processed_cve = {
+            'cve_id': cve_id,
+            'description': description,
+            'reference_urls': json.dumps(references),
+            'published': published,
+            'cvss_data': json.dumps(metrics),
+            'metadata': json.dumps(cve_data)
+        }
+        
+        logger.debug(f"Successfully processed CVE {cve_id}")
+        return processed_cve
+        
+    except Exception as e:
+        logger.error(f"Error processing CVE data: {e}", exc_info=True)
+        logger.debug(f"Problem CVE data: {json.dumps(cve)[:500]}...")
         return None
-    
-    # Extract description
-    descriptions = cve_data.get('descriptions', [])
-    english_descriptions = [d for d in descriptions if d.get('lang') == 'en']
-    description = english_descriptions[0].get('value') if english_descriptions else "No description available"
-    
-    # Extract references
-    references = []
-    for ref in cve_data.get('references', []):
-        url = ref.get('url')
-        if url:
-            references.append(url)
-    
-    # Extract publish date
-    published = cve_data.get('published')
-    
-    # Extract CVSS data
-    metrics = cve_data.get('metrics', {})
-    
-    return {
-        'cve_id': cve_id,
-        'description': description,
-        'reference_urls': json.dumps(references),
-        'published': published,
-        'cvss_data': json.dumps(metrics),
-        'metadata': json.dumps(cve_data)
-    }
 
 def is_cve_processed(cve_id):
     """Check if a CVE has already been processed"""
@@ -642,7 +708,7 @@ def process_cve_batch(cves):
 def poll_nvd():
     """Poll NVD for new CVEs"""
     end_time = datetime.now(timezone.utc)
-    start_time = end_time - timedelta(hours=1)  # Look back 1 hour
+    start_time = end_time - timedelta(hours=24)  # Look back 24 hours
     
     try:
         # Fetch CVEs from NVD
