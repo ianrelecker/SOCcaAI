@@ -1,0 +1,120 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# SOCca Vulnerability Dashboard\n\nThis workbook provides visibility into vulnerabilities collected by SOCca with OpenAI-enhanced analysis."
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "f8c2dca3-66b5-4f24-a944-4a8f02d995d3",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ]
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "label": "Time Range"
+          },
+          {
+            "id": "bef8b746-bbcd-4dfc-90e0-1e5e9d1c4523",
+            "version": "KqlParameterItem/1.0",
+            "name": "CVSSThreshold",
+            "type": 1,
+            "value": "7.0",
+            "label": "CVSS Threshold",
+            "description": "Minimum CVSS score to show"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| summarize CVE_Count=count() by bin(TimeGenerated, 1d)\n| render timechart",
+        "size": 0,
+        "title": "CVEs Over Time",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "cves_over_time"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| where CVSS_Score_d >= {CVSSThreshold}\n| extend Severity = case(\n    CVSS_Score_d >= 9.0, \"Critical\",\n    CVSS_Score_d >= 7.0, \"High\",\n    CVSS_Score_d >= 4.0, \"Medium\",\n    \"Low\")\n| summarize Count=count() by Severity\n| order by Count desc",
+        "size": 1,
+        "title": "CVEs by Severity",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "name": "cves_by_severity"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| where CVSS_Score_d >= {CVSSThreshold}\n| project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s, Description_s\n| order by CVSS_Score_d desc",
+        "size": 0,
+        "title": "Top Vulnerabilities",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "top_vulnerabilities"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| where AI_Analysis_s contains \"exploit\" or AI_Analysis_s contains \"exploitable\"\n| project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s\n| order by CVSS_Score_d desc",
+        "size": 0,
+        "title": "Exploitable Vulnerabilities",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "exploitable_vulnerabilities"
+    }
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

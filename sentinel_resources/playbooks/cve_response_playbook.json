@@ -1,0 +1,137 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Create_HTML_table": {
+                "inputs": {
+                    "format": "HTML",
+                    "from": "@triggerBody()?['entities']"
+                },
+                "runAfter": {
+                    "Initialize_variable_-_TeamChannel": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Table"
+            },
+            "For_each_CVE": {
+                "actions": {
+                    "Create_Incident_Task": {
+                        "inputs": {
+                            "body": {
+                                "incidentArmId": "@triggerBody()?['object']?['id']",
+                                "taskDescription": "Verify impact and patching status for @{items('For_each_CVE')?['CVE_s']}",
+                                "taskTitle": "Assess vulnerability: @{items('For_each_CVE')?['CVE_s']}"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['microsoftsentinel']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/Incidents/CreateTask"
+                        },
+                        "runAfter": {
+                            "Get_NVD_Details": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection"
+                    },
+                    "Get_NVD_Details": {
+                        "inputs": {
+                            "uri": "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=@{items('For_each_CVE')?['CVE_s']}"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    }
+                },
+                "foreach": "@triggerBody()?['entities']",
+                "runAfter": {
+                    "Create_HTML_table": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "Initialize_variable_-_TeamChannel": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "TeamChannel",
+                            "type": "string",
+                            "value": "Security Operations"
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Post_to_Teams": {
+                "inputs": {
+                    "body": {
+                        "messageBody": "<p>SOCca has detected critical vulnerabilities:</p>@{outputs('Create_HTML_table')}<p>Incident created in Microsoft Sentinel.</p>",
+                        "recipient": {
+                            "channelId": "@variables('TeamChannel')",
+                            "groupId": "YOUR-TEAMS-GROUP-ID"
+                        },
+                        "subject": "ALERT: Critical vulnerability detected - @{first(triggerBody()?['entities'])?['CVE_s']}"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['teams']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/beta/teams/conversation/message/poster/Flow bot/location/@{encodeURIComponent('Channel')}"
+                },
+                "runAfter": {
+                    "For_each_CVE": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "Microsoft_Sentinel_incident": {
+                "inputs": {
+                    "body": {
+                        "callback_url": "@{listCallbackUrl()}"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['microsoftsentinel']['connectionId']"
+                        }
+                    },
+                    "path": "/incident-creation"
+                },
+                "type": "ApiConnectionWebhook"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "microsoftsentinel": {
+                    "connectionId": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/connections/microsoftsentinel",
+                    "connectionName": "microsoftsentinel",
+                    "id": "/subscriptions/{subscription-id}/providers/Microsoft.Web/locations/{location}/managedApis/microsoftsentinel"
+                },
+                "teams": {
+                    "connectionId": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/connections/teams",
+                    "connectionName": "teams",
+                    "id": "/subscriptions/{subscription-id}/providers/Microsoft.Web/locations/{location}/managedApis/teams"
+                }
+            }
+        }
+    }
+}

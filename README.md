@@ -1,25 +1,22 @@
-# SOCca Core
+# SOCcaAI 🛡️
 
-Minimal Docker container that:
-1. Pulls CVEs from NVD API
-2. Analyzes them with OpenAI
-3. Sends them to Microsoft Sentinel
+**Supercharge your security operations with AI-powered vulnerability intelligence!**
 
-## Overview
+SOCcaAI is a blazing-fast pipeline that:
+1. 🔍 **Pulls CVEs** from NVD API in real-time
+2. 🧠 **Analyzes them with OpenAI** for contextual insight
+3. 🚀 **Sends them to Microsoft Sentinel** for immediate action
 
-This container provides a streamlined pipeline for security vulnerability management. 
-It constantly polls the NVD API for new vulnerabilities, analyzes them using AI, and 
-sends the results directly to Microsoft Sentinel for integration into your security operations.
+## ✨ Why SOCcaAI?
 
-## Features
+Traditional vulnerability monitoring is slow, noisy, and lacks context. SOCcaAI transforms this experience:
 
-- Single Python file implementation
-- Real-time CVE monitoring and analysis
-- Immediate Sentinel integration
-- Alert template generation
-- NIST NVD direct linking
+- **Real-time vulnerability detection** - Know about threats as they emerge
+- **AI-powered analysis** - Get detailed impact assessments beyond CVSS scores
+- **Instant Sentinel integration** - Feed your SIEM with pre-analyzed, actionable intelligence
+- **Zero maintenance** - Single container with persistent storage and automatic recovery
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 # 1. Clone the repository
@@ -34,7 +31,7 @@ cp .env.example .env
 ./deploy.sh
 ```
 
-## Configuration (.env file)
+## ⚙️ Configuration (.env file)
 
 ```
 # Required API Keys
@@ -48,38 +45,50 @@ OPENAI_MODEL=gpt-4o-mini                  # OpenAI model to use
 POLLING_INTERVAL=600                      # Seconds between NVD API checks
 ```
 
-## How It Works
+## 📊 How It Works
 
-1. The container polls the NVD API at regular intervals for new CVEs
-2. Each new CVE is analyzed using OpenAI to generate a detailed security report
-3. The CVE data and analysis are sent to Microsoft Sentinel via the Log Analytics API
-4. Alert templates are generated to help security teams respond to threats
+1. **Monitor**: Continuously poll the NVD API for new CVEs
+2. **Analyze**: Use OpenAI to generate comprehensive security reports with:
+   - Severity assessment and impact analysis
+   - Affected systems and exploitation vectors
+   - Detection strategies with KQL queries
+   - MITRE ATT&CK mapping
+3. **Integrate**: Send enriched data to Microsoft Sentinel in real-time
+4. **Alert**: Generate actionable templates for security response
 
-## Logs and Data
-
-- All data is stored in a SQLite database within the Docker volume
-- Logs are available via `docker logs socca`
-- Database and alert templates are persisted in Docker volumes
-
-## Docker Commands
+## 📝 Logs and Data
 
 ```bash
-# View logs
+# View real-time logs
 docker logs -f socca
 
-# Stop container
-docker-compose down
+# Check the database (contains all processed CVEs)
+docker exec -it socca sqlite3 /app/data/socca.db 'SELECT COUNT(*) FROM cves'
 
-# Restart container
-docker-compose restart
+# View recent alert templates 
+docker exec -it socca ls -la /app/data/
 ```
 
-## Minimal Architecture
+## 🔄 System Architecture
 
-This solution uses:
-- Python with SQLite for data storage
-- Docker for containerization
-- OpenAI API for vulnerability analysis
-- Microsoft Sentinel Log Analytics API for security integration
+SOCcaAI uses a minimal, efficient architecture:
+- **Python** with SQLite for lightweight, persistent storage
+- **Docker** for easy deployment and isolation
+- **OpenAI API** for advanced vulnerability analysis
+- **Microsoft Sentinel API** for security integration
 
-All in a single file with no unnecessary dependencies.
+All packaged in a single file with no bloat or unnecessary dependencies!
+
+## 📊 Microsoft Sentinel Resources
+
+Ready-to-use Sentinel resources are available in the `sentinel_resources` directory:
+
+- **KQL Queries**: Advanced search templates for finding critical vulnerabilities
+- **Workbooks**: Interactive dashboards for CVE visualization and trends
+- **Detection Rules**: Pre-built analytics rules for automated alerting
+- **Playbooks**: Response automation workflows for incident management
+- **Hunting Queries**: Specialized queries for proactive threat hunting
+
+See the [sentinel_resources/README.md](sentinel_resources/README.md) for implementation details.
+
+---
