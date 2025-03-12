@@ -18,6 +18,66 @@ Traditional vulnerability monitoring is slow, noisy, and lacks context. SOCcaAI 
 
 ## 🚀 Quick Start
 
+### Option 1: Using the published Docker image
+
+```bash
+# Pull and run the published image with environment variables
+docker run -d --name socca \
+  -e NVD_API_KEY=your_nvd_api_key \
+  -e OPENAI_API_KEY=your_openai_api_key \
+  -e SENTINEL_WORKSPACE_ID=your_workspace_id \
+  -e SENTINEL_PRIMARY_KEY=your_primary_key \
+  -v socca_data:/app/data \
+  -v socca_logs:/app/logs \
+  ghcr.io/ianrelecker/socca:latest
+```
+
+### Option 2: Using an environment file
+
+Create a `.env` file with your variables:
+```
+NVD_API_KEY=your_nvd_api_key
+OPENAI_API_KEY=your_openai_api_key
+SENTINEL_WORKSPACE_ID=your_workspace_id
+SENTINEL_PRIMARY_KEY=your_primary_key
+```
+
+Then run:
+```bash
+docker run -d --name socca \
+  --env-file .env \
+  -v socca_data:/app/data \
+  -v socca_logs:/app/logs \
+  ghcr.io/ianrelecker/socca:latest
+```
+
+### Option 3: Using Docker Compose
+
+Create a `docker-compose.yml` file:
+```yaml
+version: '3'
+services:
+  socca:
+    image: ghcr.io/ianrelecker/socca:latest
+    container_name: socca
+    env_file: .env
+    volumes:
+      - socca_data:/app/data
+      - socca_logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  socca_data:
+  socca_logs:
+```
+
+Then simply run:
+```bash
+docker-compose up -d
+```
+
+### Option 4: Build from source
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/ianrelecker/soccaAi.git
