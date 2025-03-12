@@ -106,7 +106,9 @@ def setup_env_file():
         print("IMPORTANT: Edit your .env file to include at least these required settings:")
         print("  - NVD_API_KEY: Get from https://nvd.nist.gov/developers/request-an-api-key")
         print("  - OPENAI_API_KEY: Get from https://platform.openai.com/api-keys")
-        print("  - SIEM integration settings (if using direct integration with SIEM platforms)")
+        print("  - Microsoft Sentinel settings (if using direct integration):")
+        print("    - SENTINEL_WORKSPACE_ID: Log Analytics workspace ID")
+        print("    - SENTINEL_PRIMARY_KEY: Log Analytics primary key")
         print("="*80 + "\n")
 
 

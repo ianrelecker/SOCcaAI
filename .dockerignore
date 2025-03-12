@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.github
+
+# Environments
+.env
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Data directories (mount these as volumes)
+kryptos_working/data/cache/*
+kryptos_working/data/exports/*
+kryptos_working/logs/*
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+!README.md  # Include README.md for documentation
+
+# Legacy files
+legacy/
+deployment/
+test_imports.py
+
+# Other unnecessary files
+.DS_Store
+*.swp
+*.swo

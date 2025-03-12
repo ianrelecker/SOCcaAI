@@ -1,56 +1,31 @@
 #!/bin/bash
-# Startup script for SOCca Microsoft Sentinel integration on Linux
+# Docker-optimized startup script for SOCca Microsoft Sentinel integration
 
-# Determine Python command
-PYTHON_CMD="python3"
-if ! command -v python3 &> /dev/null; then
-  if command -v python &> /dev/null; then
-    PYTHON_CMD="python"
-  else
-    echo "ERROR: Python 3 is not installed. Please install Python 3.8 or later."
-    exit 1
-  fi
-fi
+# Use fixed Python command for Docker
+PYTHON_CMD="python"
 
-# Check if we can import the required modules
-$PYTHON_CMD -c "import openai, requests, sqlite3" 2>/dev/null || {
-  echo "ERROR: Required Python modules not found. Running install_dependencies.sh..."
-  chmod +x install_dependencies.sh
-  ./install_dependencies.sh
-}
+# Set up logging to stdout for Docker
+echo "$(date) - SOCca starting up in Docker container..."
 
-# Create necessary directories
-mkdir -p logs
-mkdir -p data/exports
-mkdir -p kryptos_working/data/sentinel_output
-mkdir -p kryptos_working/logs
-mkdir -p kryptos_working/data/cache
+# Create necessary directories if they don't exist (should already be created in Dockerfile)
+mkdir -p /app/logs
+mkdir -p /app/kryptos_working/data/sentinel_output
+mkdir -p /app/kryptos_working/logs
+mkdir -p /app/kryptos_working/data/cache
 
-# Log startup
-echo "$(date) - SOCca starting up..." > logs/startup.log
-
-# Load environment variables if .env exists
-if [ -f ".env" ]; then
-  export $(grep -v '^#' .env | xargs)
-  echo "$(date) - Loaded environment variables from .env file" >> logs/startup.log
-else
-  echo "WARNING: .env file not found. Using system environment variables."
-  echo "$(date) - WARNING: .env file not found" >> logs/startup.log
-fi
+# Environment variables are already loaded in Docker container
 
 # Run initialization and setup
 $PYTHON_CMD setup.py --skip-import-prompt
 
-# Set up logging
-exec > >(tee -a logs/startup.log) 2>&1
 echo "$(date) - Starting SOCca services for Microsoft Sentinel..."
 
-# Start CVE monitoring in the background
+# Start CVE monitoring in background
 echo "$(date) - Starting CVE monitoring..."
 $PYTHON_CMD kryptos_working/mainv2.py &
 MONITOR_PID=$!
 
-# Wait for a few seconds for the services to start
+# Wait for services to start
 sleep 5
 
 # Check if environment variables are set for Microsoft Sentinel integration
@@ -65,7 +40,7 @@ if [[ -n "$SENTINEL_WORKSPACE_ID" && -n "$SENTINEL_PRIMARY_KEY" ]]; then
     echo "$(date) - Generating Microsoft Sentinel alert templates..."
     $PYTHON_CMD kryptos_working/sentinel_exporter.py --alerts
     
-    # Set up a cron-like job to run the Sentinel exporter every hour
+    # Set up a job to run the Sentinel exporter every hour
     echo "$(date) - Setting up hourly Microsoft Sentinel export job..."
     while true; do
         sleep 3600  # Wait for 1 hour
@@ -81,7 +56,7 @@ else
     echo "$(date) - Running file export mode instead..."
     $PYTHON_CMD kryptos_working/sentinel_exporter.py --file-export --format ndjson
     
-    # Set up a cron-like job to run file exports every hour
+    # Set up a job to run file exports every hour
     echo "$(date) - Setting up hourly file export job..."
     while true; do
         sleep 3600  # Wait for 1 hour
@@ -91,8 +66,8 @@ else
     EXPORT_PID=$!
 fi
 
-# Trap the SIGTERM and SIGINT signals to properly shut down
+# Handle Docker stop/term signals
 trap 'echo "$(date) - Shutting down SOCca services..."; kill $MONITOR_PID 2>/dev/null; kill $SENTINEL_PID 2>/dev/null; kill $EXPORT_PID 2>/dev/null; exit 0' SIGTERM SIGINT
 
-# Wait for the monitor process to complete (this will block)
+# Wait for the monitor process (this will keep the container running)
 wait $MONITOR_PID

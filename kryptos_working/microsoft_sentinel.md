@@ -47,34 +47,38 @@ SENTINEL_API_VERSION=2016-04-01
 
 ### Direct API Integration
 
+The Docker container automatically handles direct exports to Microsoft Sentinel. To manually trigger:
+
 ```bash
-# Send latest CVEs directly to Microsoft Sentinel
-python kryptos_working/sentinel_exporter.py --direct-send
+# Execute command inside the running container
+docker exec -it socca python kryptos_working/sentinel_exporter.py --direct-send
 
 # Send CVEs from the last X hours
-python kryptos_working/sentinel_exporter.py --direct-send --hours 12
+docker exec -it socca python kryptos_working/sentinel_exporter.py --direct-send --hours 12
 
 # Send CVEs with minimum CVSS score
-python kryptos_working/sentinel_exporter.py --direct-send --min-cvss 7.0
+docker exec -it socca python kryptos_working/sentinel_exporter.py --direct-send --min-cvss 7.0
 ```
 
 ### File Export
 
+For file-based exports:
+
 ```bash
 # Export to JSON file for manual import
-python kryptos_working/sentinel_exporter.py --file-export
+docker exec -it socca python kryptos_working/sentinel_exporter.py --file-export
 
 # Export in NDJSON format (better for Log Analytics Data Collector)
-python kryptos_working/sentinel_exporter.py --file-export --format ndjson
+docker exec -it socca python kryptos_working/sentinel_exporter.py --file-export --format ndjson
 ```
 
-Files are saved to `kryptos_working/data/sentinel_output/` with timestamps in the filenames.
+Files are saved in the container at `/app/kryptos_working/data/sentinel_output/` with timestamps in the filenames. These are mapped to a volume for persistence.
 
 ### Alert Templates
 
 ```bash
 # Generate Microsoft Sentinel alert templates
-python kryptos_working/sentinel_exporter.py --alerts
+docker exec -it socca python kryptos_working/sentinel_exporter.py --alerts
 ```
 
 This creates JSON files containing ready-to-use Sentinel analytics rules with:
@@ -101,14 +105,14 @@ SOCca sends the following fields to Microsoft Sentinel:
 | AffectedVendors | Comma-separated list of affected vendors |
 | MitreAttackTactics | MITRE ATT&CK technique IDs extracted from the report |
 
-## Linux Server Deployment
+## Docker Deployment
 
-SOCca can be deployed on any Linux server with these simple steps:
+SOCca is deployed using Docker for consistent operation:
 
-1. Install dependencies:
+1. Use the Docker helper script to set up:
    ```bash
-   chmod +x install_dependencies.sh
-   ./install_dependencies.sh
+   chmod +x docker-compose.sh
+   ./docker-compose.sh setup
    ```
 
 2. Configure environment variables in `.env` file:
@@ -119,13 +123,12 @@ SOCca can be deployed on any Linux server with these simple steps:
    NVD_API_KEY=your-nvd-api-key
    ```
 
-3. Set up as systemd services for continuous operation:
+3. Start SOCca:
    ```bash
-   # Follow the instructions in deployment.md
-   # to create systemd service files
+   ./docker-compose.sh start
    ```
 
-The deployed system will:
+The deployed container will:
 - Continuously monitor for new CVEs
 - Analyze vulnerabilities using AI
 - Automatically export to Microsoft Sentinel
@@ -196,18 +199,33 @@ SOCcaCVE_CL
 
 ### Logging
 
-Logs are written to:
-- `kryptos_working/logs/sentinel_exporter.log`
-- System stdout/stderr when run in a terminal
+Logs are accessible through:
+- Docker container logs: `docker logs socca` or `./docker-compose.sh logs`
+- Container path: `/app/kryptos_working/logs/sentinel_exporter.log`
+- Mapped volume on host
 
-Increase log verbosity by editing the sentinel_exporter.py file and changing:
-```python
-logging.basicConfig(level=logging.INFO, ...)
+View logs specific to Sentinel integration:
+
+```bash
+# View Sentinel exporter logs
+docker exec -it socca cat /app/kryptos_working/logs/sentinel_exporter.log
+
+# Stream container logs
+docker logs -f socca
 ```
 
-to:
-```python
-logging.basicConfig(level=logging.DEBUG, ...)
+To increase log verbosity:
+```bash
+# Enter the container
+docker exec -it socca bash
+
+# Edit the file
+nano kryptos_working/sentinel_exporter.py
+
+# Change logging level from INFO to DEBUG
+# logging.basicConfig(level=logging.INFO, ...)
+# to:
+# logging.basicConfig(level=logging.DEBUG, ...)
 ```
 
 ## References

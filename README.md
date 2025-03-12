@@ -1,6 +1,6 @@
 # SOCca - AI-Powered CVE Intelligence with Microsoft Sentinel Integration
 
-SOCca is an advanced security vulnerability monitoring and analysis platform designed to run on Linux servers. It leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
+SOCca is an advanced security vulnerability monitoring and analysis platform containerized with Docker for easy deployment. It leverages AI to provide actionable intelligence on emerging threats with seamless Microsoft Sentinel integration.
 
 ## 🚀 Key Features
 
@@ -9,55 +9,77 @@ SOCca is an advanced security vulnerability monitoring and analysis platform des
 - **Intelligent Severity Assessment**: Goes beyond CVSS scores to provide context-aware risk evaluations
 - **Microsoft Sentinel Integration**: Direct integration with Microsoft Sentinel via Log Analytics API
 - **Alert Template Generation**: Creates ready-to-use Sentinel analytics rules based on vulnerabilities
-- **Linux Server Optimized**: Designed to run as systemd services on Linux servers for reliability
+- **Docker Containerized**: Deployable anywhere with Docker for consistent operation and easy management
+- **Microservices Ready**: Supports both all-in-one and microservices deployment patterns
 
 ## 📋 Quick Installation Guide
 
 ### Prerequisites
 
-- Linux server with Python 3.8+
+- Docker and Docker Compose
 - NVD API key (free from https://nvd.nist.gov/developers/request-an-api-key)
 - OpenAI API key
-- Microsoft Sentinel workspace with Log Analytics access
+- Microsoft Sentinel workspace with Log Analytics access (for Sentinel integration)
 
-### Installation
+### Docker Installation (Recommended)
+
+The easiest way to run SOCca is using Docker:
 
 ```bash
 # Clone the repository
 git clone https://github.com/ianrelecker/SOCcaAI.git
 cd SOCcaAI
 
-# Install dependencies
-chmod +x install_dependencies.sh
-./install_dependencies.sh
+# Make the Docker helper script executable
+chmod +x docker-compose.sh
 
-# Configure environment
-cp .env.example .env
-nano .env  # Edit with your API keys and Sentinel settings
+# Set up environment file
+./docker-compose.sh setup
+# Edit .env with your API keys and settings
 
-# Initialize databases
-python3 setup.py
+# Start SOCca
+./docker-compose.sh start
 ```
 
-### Running SOCca
+### Docker Deployment Options
 
-Start all components automatically with the startup script:
+SOCca supports multiple deployment options with Docker:
+
+1. **All-in-one deployment**
+   ```bash
+   ./docker-compose.sh start
+   ```
+
+2. **Microservices deployment** (separate containers for monitor and Sentinel)
+   ```bash
+   ./docker-compose.sh micro
+   ```
+
+3. **Production deployment** (with resource limits)
+   ```bash
+   ./docker-compose.sh prod
+   ```
+
+### Useful Docker Commands
 
 ```bash
-chmod +x startup.sh
-./startup.sh
+# Check service status
+./docker-compose.sh status
+
+# View logs
+./docker-compose.sh logs
+
+# Stop services
+./docker-compose.sh stop
+
+# Backup data
+./docker-compose.sh backup
+
+# Restore from backup
+./docker-compose.sh restore
 ```
 
-For production deployments, use the provided systemd service files:
-
-```bash
-sudo cp deployment/socca-*.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable socca-monitor socca-sentinel
-sudo systemctl start socca-monitor socca-sentinel
-```
-
-For complete step-by-step instructions, see the [Quick Start Guide](kryptos_working/quickstart.md).
+For complete step-by-step instructions, see the [Docker Quickstart Guide](DOCKER_QUICKSTART.md).
 
 ## 🛡️ Microsoft Sentinel Integration
 
@@ -131,35 +153,81 @@ SOCcaCVE_CL
 | where AffectedProducts_s has_any("Windows Server", "Azure", "Office 365")
 ```
 
-## 🚀 Deployment Options
+## 🚀 Docker Deployment Options
 
-### Linux Server Deployment
+SOCca is designed to run in Docker containers with multiple deployment options to fit different needs:
 
-SOCca is designed to run on Linux servers with two deployment options:
+### All-in-One Deployment (Recommended)
 
-#### Quick Start with Startup Script (Testing/Development)
-
-```bash
-# Start all services using the startup script
-chmod +x startup.sh
-./startup.sh
-```
-
-#### Production Deployment with Systemd
-
-For production environments, configure SOCca components as system services:
+The simplest way to run SOCca with everything in a single container:
 
 ```bash
-# Copy and configure service files
-sudo cp deployment/socca-*.service /etc/systemd/system/
-
-# Enable and start services
-sudo systemctl daemon-reload
-sudo systemctl enable socca-monitor socca-sentinel
-sudo systemctl start socca-monitor socca-sentinel
+# Start SOCca with the helper script
+./docker-compose.sh start
 ```
 
-For detailed instructions, see the [Deployment Guide](kryptos_working/deployment.md).
+This runs the CVE monitor and Sentinel exporter in the same container, suitable for most use cases.
+
+### Microservices Deployment
+
+For more granular control, run the components in separate containers:
+
+```bash
+# Start SOCca as microservices
+./docker-compose.sh micro
+```
+
+This runs:
+- `socca-monitor` - Polls the NVD API and processes CVEs
+- `socca-sentinel` - Exports data to Microsoft Sentinel on a schedule
+
+### Production Deployment
+
+For production environments with resource controls:
+
+```bash
+# Start SOCca in production mode
+./docker-compose.sh prod
+```
+
+Features:
+- CPU and memory limits
+- Log rotation
+- Separate production environment file
+- Optimized for 24/7 operation
+
+### Configuration & Management
+
+The helper script provides comprehensive management:
+
+```bash
+# Show all available commands
+./docker-compose.sh help
+
+# Common operations
+./docker-compose.sh logs     # View container logs
+./docker-compose.sh status   # Check container status
+./docker-compose.sh restart  # Restart containers
+./docker-compose.sh backup   # Create a full backup
+./docker-compose.sh restore  # Restore from backup
+```
+
+### Data Persistence
+
+All data is stored in Docker volumes:
+- `socca-data` - Databases and cached content
+- `socca-logs` - Application logs
+- `socca-kryptos-logs` - Component-specific logs
+
+### Advanced Docker Configuration
+
+For advanced users, edit docker-compose.yml directly:
+- Add custom resource limits
+- Configure networking options
+- Set up additional volumes
+- Add container labels
+
+For detailed configuration options, refer to comments in the docker-compose.yml file.
 
 ## 📊 Advanced Configuration
 
@@ -173,39 +241,88 @@ To modify how vulnerabilities are analyzed:
 
 ### Scheduling and Automation
 
-Configure automated exports to Microsoft Sentinel:
+The Docker container automatically handles scheduled exports to Microsoft Sentinel. No additional configuration is needed.
+
+For custom scheduling, you can use the microservices deployment mode:
 
 ```bash
-# Add to crontab for scheduled exports
-0 * * * * cd /path/to/SOCcaAI && python3 kryptos_working/sentinel_exporter.py --direct-send --hours 1
+# Start with dedicated Sentinel export service
+./docker-compose.sh micro
 ```
 
 ## 📚 Documentation
 
+- [Docker Quickstart Guide](DOCKER_QUICKSTART.md) - Docker deployment instructions
+- [Architecture Documentation](ARCHITECTURE.md) - Comprehensive system architecture and component details
 - [Microsoft Sentinel Integration Guide](kryptos_working/microsoft_sentinel.md) - Comprehensive Sentinel integration details
-- [Deployment Guide](kryptos_working/deployment.md) - Linux server deployment instructions
-- [Quick Start Guide](kryptos_working/quickstart.md) - Complete setup and usage instructions
 
 ## 🔍 Troubleshooting
 
-Common issues and solutions:
+### Docker Deployment Issues
+
+1. **Container doesn't start**:
+   ```bash
+   # Check container logs
+   ./docker-compose.sh logs
+   
+   # Check container status
+   ./docker-compose.sh status
+   
+   # Verify your .env file has required variables
+   cat .env | grep -E 'API_KEY|WORKSPACE_ID'
+   ```
+
+2. **Database initialization errors**:
+   ```bash
+   # Force rebuild of the image
+   ./docker-compose.sh build
+   
+   # Reset the container and volumes
+   ./docker-compose.sh reset
+   ./docker-compose.sh start
+   ```
+
+3. **Permission issues with volumes**:
+   ```bash
+   # Fix permissions in container
+   docker exec -it socca bash -c "chmod -R 755 /app/kryptos_working/data"
+   ```
+
+4. **Container health checks failing**:
+   ```bash
+   # Check container health
+   docker inspect --format "{{.State.Health.Status}}" socca
+   
+   # View container health logs
+   docker inspect --format "{{json .State.Health}}" socca | jq
+   ```
+
+### Microsoft Sentinel Integration Issues
 
 1. **Missing data in Sentinel**:
    - Verify SENTINEL_WORKSPACE_ID and SENTINEL_PRIMARY_KEY are correct
-   - Check sentinel_exporter.log for API errors
-   - Ensure network allows outbound HTTPS connections
+   - Check logs with `./docker-compose.sh logs`
+   - Ensure outbound HTTPS connections are allowed
 
 2. **API rate limiting**:
    - Adjust POLLING_INTERVAL in .env file to reduce API calls
-   - Consider using --hours parameter to limit data volume
+   - Check NVD API logs for rate limit errors
 
-3. **Database errors**:
-   - Check file permissions on database files
-   - Run `python3 setup.py` to reinitialize if necessary
+3. **OpenAI API issues**:
+   - Verify OPENAI_API_KEY is correctly set
+   - Confirm that the specified models are available for your account
+   - Check OpenAI response in logs
 
-4. **Service failures**:
-   - Check service logs with `sudo journalctl -u socca-monitor`
-   - Verify correct paths in service files
+4. **Container networking issues**:
+   ```bash
+   # Check if container can reach external services
+   docker exec -it socca curl -I https://services.nvd.nist.gov
+   ```
+
+For more detailed troubleshooting, see the logs:
+```bash
+./docker-compose.sh logs
+```
 
 ## 🤝 Contributing
 
