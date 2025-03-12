@@ -261,32 +261,73 @@ def process_cve_batch(cves, batch_size=10):
                     # Add to batch for sending
                     cves_to_send.append(cve_record)
                     
-                    # Send in batches
-                    if len(cves_to_send) >= batch_size:
-                        logger.info(f"Sending batch of {len(cves_to_send)} CVEs to Microsoft Sentinel...")
-                        success, errors = sentinel_exporter.send_to_sentinel(cves_to_send)
-                        if success:
-                            sent_ids = [record['cve_id'] for record in cves_to_send]
-                            mark_cves_batch_sent_to_sentinel(sent_ids)
-                            sent_to_sentinel_count += len(cves_to_send)
-                            logger.info(f"Successfully sent batch of {len(cves_to_send)} CVEs to Microsoft Sentinel")
+                    # Send immediately for real-time processing
+                    # The single CVE is sent immediately while still allowing for batching with other CVEs if they exist
+                    logger.info(f"Sending {cve.id} immediately to Microsoft Sentinel (real-time integration)...")
+                    start_time = time.time()
+                    success, errors = sentinel_exporter.send_to_sentinel([cve_record])
+                    elapsed = time.time() - start_time
+                    
+                    if success:
+                        mark_cve_sent_to_sentinel(cve.id)
+                        sent_to_sentinel_count += 1
+                        logger.info(f"✓ Successfully sent {cve.id} to Microsoft Sentinel in {elapsed:.2f}s")
+                        
+                        # Verify the CVE is marked as sent in the database
+                        if is_cve_sent_to_sentinel(cve.id):
+                            logger.info(f"✓ Verified {cve.id} is correctly marked as sent in the database")
                         else:
-                            logger.error(f"Failed to send batch of {len(cves_to_send)} CVEs to Microsoft Sentinel: {errors} errors")
+                            logger.warning(f"⚠ {cve.id} was sent but not properly marked in the database - fixing...")
+                            mark_cve_sent_to_sentinel(cve.id)
+                    else:
+                        logger.error(f"✗ Failed to send {cve.id} to Microsoft Sentinel: {errors} errors")
+                        
+                    # Also add to batch for efficiency if processing multiple CVEs
+                    # This allows both immediate sending and batch optimization
+                    if len(cves_to_send) >= batch_size:
+                        # Remove the CVE we just sent to avoid duplication
+                        cves_to_send = [record for record in cves_to_send if record['cve_id'] != cve.id]
+                        
+                        if cves_to_send:  # Only process if there are other CVEs to send
+                            logger.info(f"Sending batch of {len(cves_to_send)} additional CVEs to Microsoft Sentinel...")
+                            success, errors = sentinel_exporter.send_to_sentinel(cves_to_send)
+                            if success:
+                                sent_ids = [record['cve_id'] for record in cves_to_send]
+                                mark_cves_batch_sent_to_sentinel(sent_ids)
+                                sent_to_sentinel_count += len(cves_to_send)
+                                logger.info(f"Successfully sent batch of {len(cves_to_send)} additional CVEs to Microsoft Sentinel")
+                            else:
+                                logger.error(f"Failed to send batch of {len(cves_to_send)} additional CVEs to Microsoft Sentinel: {errors} errors")
+                        
                         cves_to_send = []
                 else:
                     logger.warning(f"No report found for {cve.id}, cannot send to Sentinel yet")
     
     # Send any remaining CVEs
     if cves_to_send:
-        logger.info(f"Sending remaining {len(cves_to_send)} CVEs to Microsoft Sentinel...")
-        success, errors = sentinel_exporter.send_to_sentinel(cves_to_send)
-        if success:
-            sent_ids = [record['cve_id'] for record in cves_to_send]
-            mark_cves_batch_sent_to_sentinel(sent_ids)
-            sent_to_sentinel_count += len(cves_to_send)
-            logger.info(f"Successfully sent remaining {len(cves_to_send)} CVEs to Microsoft Sentinel")
-        else:
-            logger.error(f"Failed to send remaining {len(cves_to_send)} CVEs to Microsoft Sentinel: {errors} errors")
+        # Check for any CVEs that haven't been sent yet
+        with get_db_connection(PROCESSED_CVES_DB) as conn:
+            cursor = conn.cursor()
+            # Get list of CVEs that haven't been sent
+            unsent_cve_ids = []
+            for record in cves_to_send:
+                cve_id = record['cve_id']
+                cursor.execute(f"SELECT 1 FROM {SENTINEL_TRACKING_TABLE} WHERE cve_id = ?", (cve_id,))
+                if cursor.fetchone() is None:  # Not yet sent
+                    unsent_cve_ids.append(cve_id)
+        
+        # Only send CVEs that haven't been sent yet
+        unsent_cves = [record for record in cves_to_send if record['cve_id'] in unsent_cve_ids]
+        if unsent_cves:
+            logger.info(f"Sending remaining {len(unsent_cves)} unsent CVEs to Microsoft Sentinel...")
+            success, errors = sentinel_exporter.send_to_sentinel(unsent_cves)
+            if success:
+                sent_ids = [record['cve_id'] for record in unsent_cves]
+                mark_cves_batch_sent_to_sentinel(sent_ids)
+                sent_to_sentinel_count += len(unsent_cves)
+                logger.info(f"Successfully sent remaining {len(unsent_cves)} CVEs to Microsoft Sentinel")
+            else:
+                logger.error(f"Failed to send remaining {len(unsent_cves)} CVEs to Microsoft Sentinel: {errors} errors")
     
     # Update poll time for next run
     begin_poll_time = end_poll_time

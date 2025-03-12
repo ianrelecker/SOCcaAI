@@ -244,7 +244,7 @@ def prepare_cve_for_sentinel(cve: Dict[str, Any]) -> Dict[str, Any]:
         "PublishedDate": cve.get('pub', ''),
         "CVSS_Score": cve.get('cvss_score', 0.0),
         "Severity": cve.get('severity', 'Unknown'),
-        "ReferenceURL": f"{SITE_URL}/cve/{cve.get('cve_id', '').lower()}"
+        "ReferenceURL": f"https://nvd.nist.gov/vuln/detail/{cve.get('cve_id', '')}"
     }
     
     # Get report content if available
