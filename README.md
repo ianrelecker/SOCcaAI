@@ -147,8 +147,6 @@ Ready-to-use Sentinel resources are available in the `sentinel_resources` direct
 
 - **KQL Queries**: Advanced search templates for finding critical vulnerabilities
 - **Workbooks**: Interactive dashboards for CVE visualization and trends
-- **Detection Rules**: Pre-built analytics rules for automated alerting
-- **Playbooks**: Response automation workflows for incident management
 - **Hunting Queries**: Specialized queries for proactive threat hunting
 
 See the [sentinel_resources/README.md](sentinel_resources/README.md) for implementation details.
