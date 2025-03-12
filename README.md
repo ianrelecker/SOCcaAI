@@ -20,7 +20,7 @@ Traditional vulnerability monitoring is slow, noisy, and lacks context. SOCcaAI 
 
 ```bash
 # 1. Clone the repository
-git clone <repository-url>
+git clone https://github.com/ianrelecker/soccaAi.git
 cd socca
 
 # 2. Configure your environment
@@ -42,7 +42,7 @@ SENTINEL_PRIMARY_KEY=your_primary_key     # From Microsoft Sentinel
 
 # Optional Settings
 OPENAI_MODEL=gpt-4o-mini                  # OpenAI model to use
-POLLING_INTERVAL=600                      # Seconds between NVD API checks
+POLLING_INTERVAL=60                      # Seconds between NVD API checks
 ```
 
 ## 📊 How It Works
