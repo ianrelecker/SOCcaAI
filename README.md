@@ -7,7 +7,7 @@ SOCca is an advanced security vulnerability monitoring and analysis platform con
 - **Real-time CVE Monitoring**: Automatically tracks new vulnerabilities as they're published to the NVD
 - **AI-Powered Analysis**: Uses OpenAI models to generate comprehensive vulnerability reports with actionable insights
 - **Intelligent Severity Assessment**: Goes beyond CVSS scores to provide context-aware risk evaluations
-- **Microsoft Sentinel Integration**: Direct integration with Microsoft Sentinel via Log Analytics API
+- **Immediate Sentinel Integration**: Sends vulnerability data to Microsoft Sentinel in real-time as CVEs are processed
 - **Alert Template Generation**: Creates ready-to-use Sentinel analytics rules based on vulnerabilities
 - **Docker Containerized**: Deployable anywhere with Docker for consistent operation and easy management
 - **Microservices Ready**: Supports both all-in-one and microservices deployment patterns
@@ -241,7 +241,7 @@ To modify how vulnerabilities are analyzed:
 
 ### Scheduling and Automation
 
-The Docker container automatically handles scheduled exports to Microsoft Sentinel. No additional configuration is needed.
+The system sends CVE data to Microsoft Sentinel immediately as vulnerabilities are processed. Additionally, alert templates are generated periodically every 2 hours.
 
 For custom scheduling, you can use the microservices deployment mode:
 

@@ -40,12 +40,13 @@ if [[ -n "$SENTINEL_WORKSPACE_ID" && -n "$SENTINEL_PRIMARY_KEY" ]]; then
     echo "$(date) - Generating Microsoft Sentinel alert templates..."
     $PYTHON_CMD kryptos_working/sentinel_exporter.py --alerts
     
-    # Set up a job to run the Sentinel exporter every hour
-    echo "$(date) - Setting up hourly Microsoft Sentinel export job..."
+    # CVEs are now sent to Sentinel in real-time by mainv2.py
+    # This line creates a background process to generate alert templates periodically
+    echo "$(date) - Setting up periodic Microsoft Sentinel alert template generation..."
     while true; do
-        sleep 3600  # Wait for 1 hour
-        echo "$(date) - Running scheduled Microsoft Sentinel export..."
-        $PYTHON_CMD kryptos_working/sentinel_exporter.py --direct-send --hours 1
+        sleep 7200  # Wait for 2 hours
+        echo "$(date) - Running scheduled Microsoft Sentinel alert template generation..."
+        $PYTHON_CMD kryptos_working/sentinel_exporter.py --alerts
     done &
     SENTINEL_PID=$!
 else
@@ -56,12 +57,12 @@ else
     echo "$(date) - Running file export mode instead..."
     $PYTHON_CMD kryptos_working/sentinel_exporter.py --file-export --format ndjson
     
-    # Set up a job to run file exports every hour
-    echo "$(date) - Setting up hourly file export job..."
+    # Export templates periodically for manual imports
+    echo "$(date) - Setting up periodic file export for alert templates..."
     while true; do
-        sleep 3600  # Wait for 1 hour
-        echo "$(date) - Running scheduled file export..."
-        $PYTHON_CMD kryptos_working/sentinel_exporter.py --file-export --format ndjson --hours 1
+        sleep 7200  # Wait for 2 hours
+        echo "$(date) - Running scheduled file export for alert templates..."
+        $PYTHON_CMD kryptos_working/sentinel_exporter.py --file-export --format ndjson --alerts 
     done &
     EXPORT_PID=$!
 fi

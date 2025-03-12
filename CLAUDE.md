@@ -6,7 +6,7 @@ AI-powered security vulnerability tracking system that monitors CVEs, processes 
 ## Project Focus
 SOCca has been refocused to specialize in Microsoft Sentinel integration, providing:
 - Real-time CVE monitoring and AI analysis
-- Direct export to Microsoft Sentinel via Log Analytics API
+- Immediate export to Microsoft Sentinel via Log Analytics API as CVEs are processed
 - Analytics rule templates generation
 - MITRE ATT&CK mapping for enhanced threat correlation
 
