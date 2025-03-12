@@ -1,115 +1,16 @@
-version: '3.8'
+version: '3'
 
 services:
-  # All-in-one deployment (recommended)
   socca:
     build: .
     container_name: socca
     restart: unless-stopped
     volumes:
-      - socca-data:/app/kryptos_working/data
+      - socca-data:/app/data
       - socca-logs:/app/logs
-      - socca-kryptos-logs:/app/kryptos_working/logs
     env_file:
       - .env
-    environment:
-      - TZ=${TZ:-UTC}
-      - OPENAI_REPORT_MODEL=${OPENAI_REPORT_MODEL:-o1-mini-2024-09-12}
-      - OPENAI_ANALYSIS_MODEL=${OPENAI_ANALYSIS_MODEL:-gpt-4o-mini-2024-07-18}
-      - SENTINEL_LOG_TYPE=${SENTINEL_LOG_TYPE:-SOCcaCVE}
-      - SENTINEL_API_VERSION=${SENTINEL_API_VERSION:-2016-04-01}
-      - POLLING_INTERVAL=${POLLING_INTERVAL:-60}
-    healthcheck:
-      test: ["CMD", "python", "-c", "import sqlite3; sqlite3.connect('/app/kryptos_working/processed_cves.db').close() && echo 'Database connection successful'"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    ports:
-      - "127.0.0.1:8000:8000"  # Optional: for future API endpoints
-
-  # Microservices deployment (split services)
-  # Uncomment these services to run in microservices mode
-  
-  # socca-monitor:
-  #   build: 
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: socca-monitor
-  #   restart: unless-stopped
-  #   volumes:
-  #     - socca-data:/app/kryptos_working/data
-  #     - socca-logs:/app/logs
-  #     - socca-kryptos-logs:/app/kryptos_working/logs
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - TZ=${TZ:-UTC}
-  #     - OPENAI_REPORT_MODEL=${OPENAI_REPORT_MODEL:-o1-mini-2024-09-12}
-  #     - OPENAI_ANALYSIS_MODEL=${OPENAI_ANALYSIS_MODEL:-gpt-4o-mini-2024-07-18}
-  #   command: python kryptos_working/mainv2.py
-  #   healthcheck:
-  #     test: ["CMD", "python", "-c", "import sqlite3; sqlite3.connect('/app/kryptos_working/processed_cves.db').close() && echo 'Monitor healthy'"]
-  #     interval: 1m
-  #     timeout: 10s
-  #     retries: 3
-  
-  # socca-sentinel:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: socca-sentinel
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - socca-monitor
-  #   volumes:
-  #     - socca-data:/app/kryptos_working/data
-  #     - socca-logs:/app/logs
-  #     - socca-kryptos-logs:/app/kryptos_working/logs
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - TZ=${TZ:-UTC}
-  #     - SENTINEL_LOG_TYPE=${SENTINEL_LOG_TYPE:-SOCcaCVE}
-  #     - SENTINEL_API_VERSION=${SENTINEL_API_VERSION:-2016-04-01}
-  #   command: >
-  #     /bin/bash -c "
-  #     python kryptos_working/sentinel_exporter.py --direct-send --hours 24;
-  #     python kryptos_working/sentinel_exporter.py --alerts;
-  #     while true; do
-  #       sleep 3600;
-  #       python kryptos_working/sentinel_exporter.py --direct-send --hours 1;
-  #     done
-  #     "
-  
-  # Production deployment with resource limits
-  # socca-prod:
-  #   build: .
-  #   container_name: socca-prod
-  #   restart: unless-stopped
-  #   volumes:
-  #     - socca-data:/app/kryptos_working/data
-  #     - socca-logs:/app/logs
-  #     - socca-kryptos-logs:/app/kryptos_working/logs
-  #   env_file:
-  #     - .env.prod  # Use production env file
-  #   environment:
-  #     - TZ=${TZ:-UTC}
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '1.0'
-  #         memory: 2G
-  #       reservations:
-  #         cpus: '0.5'
-  #         memory: 1G
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "50m"
-  #       max-file: "10"
 
 volumes:
   socca-data:
   socca-logs:
-  socca-kryptos-logs:
