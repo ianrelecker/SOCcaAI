@@ -36,10 +36,12 @@ docker run -d --name socca \
 
 Create a `.env` file with your variables:
 ```
+# IMPORTANT: Do not include comments on the same line as values!
 NVD_API_KEY=your_nvd_api_key
 OPENAI_API_KEY=your_openai_api_key
 SENTINEL_WORKSPACE_ID=your_workspace_id
 SENTINEL_PRIMARY_KEY=your_primary_key
+POLLING_INTERVAL=60
 ```
 
 Then run:

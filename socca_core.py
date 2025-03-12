@@ -44,8 +44,18 @@ SENTINEL_WORKSPACE_ID = os.environ.get('SENTINEL_WORKSPACE_ID')
 SENTINEL_PRIMARY_KEY = os.environ.get('SENTINEL_PRIMARY_KEY')
 SENTINEL_LOG_TYPE = os.environ.get('SENTINEL_LOG_TYPE', 'SOCcaCVE')
 SENTINEL_API_VERSION = os.environ.get('SENTINEL_API_VERSION', '2016-04-01')
-POLLING_INTERVAL = int(os.environ.get('POLLING_INTERVAL', '60'))
-MAX_TOKEN_LIMIT = int(os.environ.get('MAX_TOKEN_LIMIT', '16000'))
+# Clean environment variables to handle comments
+def get_clean_env_int(key, default):
+    value = os.environ.get(key, str(default))
+    # Extract just the number from the beginning of the string
+    # This handles cases where comments are in the same line
+    match = re.search(r'^\d+', value.strip())
+    if match:
+        return int(match.group(0))
+    return default
+
+POLLING_INTERVAL = get_clean_env_int('POLLING_INTERVAL', 60)
+MAX_TOKEN_LIMIT = get_clean_env_int('MAX_TOKEN_LIMIT', 16000)
 
 # File paths
 DATA_DIR = '/app/data'
