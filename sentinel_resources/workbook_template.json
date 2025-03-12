@@ -50,7 +50,8 @@
           }
         ],
         "style": "pills",
-        "queryType": 0
+        "queryType": 0,
+        "resourceType": "microsoft.operationsmanagement/solutions"
       },
       "name": "parameters"
     },
@@ -58,7 +59,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| summarize CVE_Count=count() by bin(TimeGenerated, 1d)\n| render timechart",
+        "query": "SOCcaCVE_CL\n| where TimeGenerated > ago(30d)\n| summarize CVE_Count=count() by bin(TimeGenerated, 1d)\n| render timechart",
         "size": 0,
         "title": "CVEs Over Time",
         "timeContext": {
@@ -73,7 +74,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| where CVSS_Score_d >= {CVSSThreshold}\n| extend Severity = case(\n    CVSS_Score_d >= 9.0, \"Critical\",\n    CVSS_Score_d >= 7.0, \"High\",\n    CVSS_Score_d >= 4.0, \"Medium\",\n    \"Low\")\n| summarize Count=count() by Severity\n| order by Count desc",
+        "query": "SOCcaCVE_CL\n| where TimeGenerated > ago(30d)\n| where CVSS_Score_d >= {CVSSThreshold}\n| extend Severity = case(\n    CVSS_Score_d >= 9.0, \"Critical\",\n    CVSS_Score_d >= 7.0, \"High\",\n    CVSS_Score_d >= 4.0, \"Medium\",\n    \"Low\")\n| summarize Count=count() by Severity\n| order by Count desc",
         "size": 1,
         "title": "CVEs by Severity",
         "timeContext": {
@@ -84,37 +85,11 @@
         "visualization": "piechart"
       },
       "name": "cves_by_severity"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| where CVSS_Score_d >= {CVSSThreshold}\n| project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s, Description_s\n| order by CVSS_Score_d desc",
-        "size": 0,
-        "title": "Top Vulnerabilities",
-        "timeContext": {
-          "durationMs": 2592000000
-        },
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces"
-      },
-      "name": "top_vulnerabilities"
-    },
-    {
-      "type": 3,
-      "content": {
-        "version": "KqlItem/1.0",
-        "query": "SOCca_CL\n| where TimeGenerated > ago({TimeRange})\n| where AI_Analysis_s contains \"exploit\" or AI_Analysis_s contains \"exploitable\"\n| project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s\n| order by CVSS_Score_d desc",
-        "size": 0,
-        "title": "Exploitable Vulnerabilities",
-        "timeContext": {
-          "durationMs": 2592000000
-        },
-        "queryType": 0,
-        "resourceType": "microsoft.operationalinsights/workspaces"
-      },
-      "name": "exploitable_vulnerabilities"
     }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/e93d19ac-a61a-4aa4-9e69-2e3d3a37ec29/resourceGroups/soccaaitest/providers/Microsoft.OperationsManagement/solutions/SecurityInsights(siem1)",
+    "/subscriptions/e93d19ac-a61a-4aa4-9e69-2e3d3a37ec29/resourcegroups/soccaaitest/providers/microsoft.operationalinsights/workspaces/siem1"
   ],
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
 }

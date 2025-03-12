@@ -4,7 +4,7 @@
 
 ### Get All CVEs from Last 24 Hours
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | where TimeGenerated > ago(24h)
 | project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s, Description_s
 | order by CVSS_Score_d desc
@@ -12,7 +12,7 @@ SOCca_CL
 
 ### Critical Vulnerabilities
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | where CVSS_Score_d >= 9.0
 | project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s, Description_s
 | order by TimeGenerated desc
@@ -20,7 +20,7 @@ SOCca_CL
 
 ### Exploitable Vulnerabilities
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | where AI_Analysis_s contains "exploit" or AI_Analysis_s contains "exploitable"
 | project TimeGenerated, CVE_s, CVSS_Score_d, AI_Analysis_s, Description_s
 | order by CVSS_Score_d desc
@@ -30,7 +30,7 @@ SOCca_CL
 
 ### CVEs Affecting Your Infrastructure
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | where CVE_s in (
     (externaldata(CVE:string) 
     [@"https://your-inventory-api/affected-tech.csv"] 
@@ -41,14 +41,14 @@ SOCca_CL
 
 ### Trend Analysis
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | summarize CVE_Count=count() by bin(TimeGenerated, 1d)
 | render timechart
 ```
 
 ### CVEs by Technology
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | extend Technology = extract("(Windows|Linux|macOS|Cisco|VMware|Azure)", 1, Description_s)
 | where isnotempty(Technology)
 | summarize CVE_Count=count() by Technology
@@ -58,7 +58,7 @@ SOCca_CL
 
 ### Compare AI Severity with CVSS Score
 ```kql
-SOCca_CL
+SOCcaCVE_CL
 | extend AI_Severity = case(
     AI_Analysis_s contains "critical", "Critical",
     AI_Analysis_s contains "severe", "High",
